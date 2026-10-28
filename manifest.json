@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "id": "dvrshil.clipboard",
+  "name": "Clipboard history",
+  "version": "1.0.0",
+  "author": "dvrshil",
+  "license": "MIT",
+  "description": "Raycast-style clipboard history: search, type filters, pins, rename, edit, OCR/QR, source app, time-window deletion, retention, and ignored apps. Reads the history Omarchy already records.",
+  "kinds": [
+    "overlay",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "Clipboard.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Clipboard history",
+    "description": "Raycast-style clipboard history with pins, filters, and actions",
+    "category": "Productivity",
+    "aliases": [
+      "clipboard",
+      "paste",
+      "history",
+      "raycast"
+    ],
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "shortcut": "",
+      "primaryAction": "Paste to active app",
+      "keepHistoryFor": "3 Months",
+      "ignoredApps": "1password, bitwarden, keepassxc"
+    },
+    "schema": [
+      {
+        "key": "shortcut",
+        "type": "string",
+        "label": "Shortcut",
+        "defaultValue": "",
+        "description": "Optional. A Hyprland chord such as ALT + V or SUPER + SHIFT + V. When set, the plugin adds one marked binding to ~/.config/hypr/bindings.lua (after a backup). Leave empty to bind it yourself."
+      },
+      {
+        "key": "primaryAction",
+        "type": "enum",
+        "label": "Primary action (Enter)",
+        "options": [
+          "Paste to active app",
+          "Copy to clipboard"
+        ],
+        "defaultValue": "Paste to active app"
+      },
+      {
+        "key": "keepHistoryFor",
+        "type": "enum",
+        "label": "Keep history for",
+        "options": [
+          "1 Day",
+          "1 Week",
+          "1 Month",
+          "3 Months",
+          "6 Months",
+          "1 Year",
+          "Unlimited"
+        ],
+        "defaultValue": "3 Months",
+        "description": "Unpinned entries older than this are removed. Pins are never removed."
+      },
+      {
+        "key": "ignoredApps",
+        "type": "string",
+        "label": "Ignored apps",
+        "defaultValue": "1password, bitwarden, keepassxc",
+        "description": "Comma-separated app ids. Copies made while one of these is focused are dropped."
+      }
+    ]
+  },
+  "homepage": "https://github.com/dvrshil/omarchy-clipboard-history"
+}
