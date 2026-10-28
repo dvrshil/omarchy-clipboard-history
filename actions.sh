@@ -140,22 +140,26 @@ set-shortcut)
 o.bind(\"$chord\", \"Clipboard history\", { panel = \"dvrshil.clipboard\" })
 $end"
 
-  current=$(cat "$BINDINGS")
-  if grep -qF "$begin" <<<"$current"; then
-    existing=$(sed -n "\|^$begin\$|,\|^$end\$|p" "$BINDINGS")
-    [[ $existing == "$block" ]] && exit 0
-    cp -- "$BINDINGS" "$BINDINGS.bak.$(date +%s)"
-    tmp=$(mktemp)
-    awk -v b="$begin" -v e="$end" -v blk="$block" '
-      $0 == b { print blk; skip = 1; next }
-      skip && $0 == e { skip = 0; next }
-      !skip { print }
-    ' "$BINDINGS" >"$tmp" && cat "$tmp" >"$BINDINGS"
-    rm -f -- "$tmp"
-  else
-    cp -- "$BINDINGS" "$BINDINGS.bak.$(date +%s)"
-    printf '\n%s\n' "$block" >>"$BINDINGS"
-  fi
+  # Several plugin instances can start at once (hot reload, overlay + bar),
+  # so serialise, and always leave exactly one managed block.
+  exec 9>"$STATE_DIR/set-shortcut.lock"
+  flock -w 10 9 || exit 1
+
+  existing=$(awk -v b="$begin" -v e="$end" '$0 == b { on = 1 } on { print } on && $0 == e { on = 0 }' "$BINDINGS")
+  [[ $existing == "$block" ]] && exit 0
+
+  cp -- "$BINDINGS" "$BINDINGS.bak.$(date +%s)"
+  tmp=$(mktemp)
+  # Drop every managed block (and the blank line before it), then append one.
+  awk -v b="$begin" -v e="$end" '
+    $0 == b { skip = 1; pending = ""; next }
+    skip { if ($0 == e) skip = 0; next }
+    /^$/ { pending = pending "\n"; next }
+    { printf "%s", pending; pending = ""; print }
+  ' "$BINDINGS" >"$tmp"
+  printf '\n%s\n' "$block" >>"$tmp"
+  cat "$tmp" >"$BINDINGS"
+  rm -f -- "$tmp"
 
   hyprctl reload >/dev/null 2>&1 || true
   errors=$(hyprctl configerrors 2>/dev/null | grep -v '^$' || true)
